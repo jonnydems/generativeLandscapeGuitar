@@ -18,8 +18,25 @@ let moonX;
 let moonY;
 let moonDiameter;
 let stars = []; // Array to store star positions
+let mic, fft;
+let starDiameter;
+
 
 function setup() {
+  // Create a new audio input (microphone)
+  mic = new p5.AudioIn();
+
+  // Start the microphone
+  mic.start();
+
+  // Create a new FFT object with a smoothing factor
+  fft = new p5.FFT(0.8, 1024);
+  
+  // Connect the FFT to the microphone input
+  fft.setInput(mic);
+
+  // Create an audio output (to play the microphone input)
+  mic.connect();
   createCanvas(windowWidth, windowHeight);
   bgTop = color(random(0, 100), random(0, 100), random(0, 100));
   bgBottom = color(red(bgTop) + 150, green(bgTop) + 150, blue(bgTop) + 150);
@@ -58,6 +75,7 @@ function setup() {
   moonX = random(width / 2, width - 200);
   moonY = random(100, height / 3);
   moonDiameter = random(100, 300);
+  starDiameter = 2;
   
   // Generate random positions for stars
   for (let i = 0; i < 200; i++) {
@@ -68,6 +86,15 @@ function setup() {
 function draw() {
   clear();
   
+  // Getting frequency
+  let spectrum = fft.analyze();
+  
+  let dominantFrequency = findDominantFrequency(spectrum);
+
+  if (dominantFrequency >= 200 && dominantFrequency < 1000) {
+    starDiameter = dominantFrequency/100;
+    console.log("balls");
+  }
   // Draw gradient background from the graphics buffer
   image(gradient, 0, 0);
   
@@ -78,7 +105,7 @@ function draw() {
     // Check if the star's y-coordinate is below a certain threshold
     let d = dist(stars[i].x, stars[i].y, moonX, moonY);
     if (d > moonDiameter / 2 + 2) {
-      ellipse(stars[i].x, stars[i].y, 2, 2); // Draw stars as small ellipses
+      ellipse(stars[i].x, stars[i].y, starDiameter, starDiameter); // Draw stars as small ellipses
     }
   }
   
@@ -108,15 +135,15 @@ function draw() {
   }
   endShape(CLOSE);
 
-  // Draw second mountain range
-  beginShape();
-  for (let i = 0; i < vertices3.length; i++) {
-    let v = vertices3[i];
-    vertex(v.x, v.y);
-    fX3 = v.x;
-    v.x -= 1;
-  }
-  endShape(CLOSE);
+  // Draw third mountain range
+  // beginShape();
+  // for (let i = 0; i < vertices3.length; i++) {
+  //   let v = vertices3[i];
+  //   vertex(v.x, v.y);
+  //   fX3 = v.x;
+  //   v.x -= 1;
+  // }
+  // endShape(CLOSE);
 
   // Adding a new vertex to the mountain ranges
   if ((byTen % 10) == 0) {
@@ -167,4 +194,23 @@ function setGradient(gra, x, y, w, h, c1, c2) {
     gra.stroke(c);
     gra.line(x, i, x + w, i);
   }
+}
+
+function findDominantFrequency(spectrum) {
+  let maxIndex = 0;
+  let maxValue = 0;
+  
+  // Find the index of the maximum value in the spectrum array
+  for (let i = 0; i < spectrum.length; i++) {
+    if (spectrum[i] > maxValue) {
+      maxValue = spectrum[i];
+      maxIndex = i;
+    }
+  }
+  
+  // Convert the index to a frequency
+  let nyquist = sampleRate() / 2;
+  let frequency = map(maxIndex, 0, spectrum.length, 0, nyquist);
+  
+  return frequency;
 }
