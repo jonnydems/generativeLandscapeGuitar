@@ -20,8 +20,11 @@ let moonDiameter;
 let stars = []; // Array to store star positions
 let mic, fft;
 let starDiameter;
+let lightning = [];
 
 function setup() {
+  strokeWeight(2);
+  frameRate(30);
   // Create a new audio input (microphone)
   mic = new p5.AudioIn();
 
@@ -35,7 +38,7 @@ function setup() {
   fft.setInput(mic);
 
   // Connect the microphone input to the master output
-  //mic.connect();
+  mic.connect();
 
   createCanvas(windowWidth, windowHeight);
   bgTop = color(random(0, 100), random(0, 100), random(0, 100));
@@ -85,15 +88,34 @@ function setup() {
 
 function draw() {
   clear();
+
+
   
   // Getting frequency
   let spectrum = fft.analyze();
   
   let dominantFrequency = findDominantFrequency(spectrum);
 
-  if (dominantFrequency >= 200 && dominantFrequency < 1000) {
+  if (dominantFrequency >= 200 && dominantFrequency < 800) {
     starDiameter = dominantFrequency / 100;
   }
+
+  amplitude = mic.getLevel();
+
+      // Create lightning at random intervals
+      if (amplitude > 0) {
+        lightning = [];
+        createLightning(width / 2, 0, width / 2, height / 4);
+      }
+    
+      // Draw the lightning
+      stroke(255, 255, 255, 200); // Set stroke to white with alpha for glow effect
+      for (let i = 0; i < lightning.length; i++) {
+        let bolt = lightning[i];
+        line(bolt.x1, bolt.y1, bolt.x2, bolt.y2);
+      }
+
+  moonDiameter = map(amplitude, 0, 1, 100, 5000);
 
   // Draw gradient background from the graphics buffer
   image(gradient, 0, 0);
@@ -136,14 +158,14 @@ function draw() {
   endShape(CLOSE);
 
   // Draw third mountain range
-  // beginShape();
-  // for (let i = 0; i < vertices3.length; i++) {
-  //   let v = vertices3[i];
-  //   vertex(v.x, v.y);
-  //   fX3 = v.x;
-  //   v.x -= 1;
-  // }
-  // endShape(CLOSE);
+  beginShape();
+  for (let i = 0; i < vertices3.length; i++) {
+    let v = vertices3[i];
+    vertex(v.x, v.y);
+    fX3 = v.x;
+    v.x -= 1;
+  }
+  endShape(CLOSE);
 
   // Adding a new vertex to the mountain ranges
   if ((byTen % 10) == 0) {
@@ -213,4 +235,21 @@ function findDominantFrequency(spectrum) {
   let frequency = map(maxIndex, 0, spectrum.length, 0, nyquist);
   
   return frequency;
+} 
+
+// Recursive function to create lightning
+function createLightning(x1, y1, x2, y2) {
+  lightning.push({ x1, y1, x2, y2 });
+
+  if (y2 < height) {
+    let nextX = x2 + random(-20, 20);
+    let nextY = y2 + random(10, 30);
+
+    createLightning(x2, y2, nextX, nextY);
+
+    // Reduce the probability of branching
+    if (random(1) < 0.1) {
+      createLightning(x2, y2, x2 + random(-20, 20), y2 + random(10, 30));
+    }
+  }
 }
