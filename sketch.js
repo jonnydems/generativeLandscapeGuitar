@@ -21,7 +21,6 @@ let stars = []; // Array to store star positions
 let mic, fft;
 let starDiameter;
 
-
 function setup() {
   // Create a new audio input (microphone)
   mic = new p5.AudioIn();
@@ -35,8 +34,9 @@ function setup() {
   // Connect the FFT to the microphone input
   fft.setInput(mic);
 
-  // Create an audio output (to play the microphone input)
-  mic.connect();
+  // Connect the microphone input to the master output
+  //mic.connect();
+
   createCanvas(windowWidth, windowHeight);
   bgTop = color(random(0, 100), random(0, 100), random(0, 100));
   bgBottom = color(red(bgTop) + 150, green(bgTop) + 150, blue(bgTop) + 150);
@@ -65,7 +65,7 @@ function setup() {
   // Initialize vertices for the third mountain range
   vertices3.push(createVector(0, height)); // Start from bottom-left corner
   for (let xi = 0; xi <= width; xi += 10) {
-    let y = map(noise(noiseOffset2), 0, 1, height * 0.7, height * 0.85); // Adjust height for shorter mountains
+    let y = map(noise(noiseOffset3), 0, 1, height * 0.7, height * 0.85); // Adjust height for shorter mountains
     vertices3.push(createVector(xi, y));
     noiseOffset3 += noiseScale3;
   }
@@ -79,7 +79,7 @@ function setup() {
   
   // Generate random positions for stars
   for (let i = 0; i < 200; i++) {
-    stars.push(createVector(random(width), random(height*0.4)));
+    stars.push(createVector(random(width), random(height * 0.4)));
   }
 }
 
@@ -92,9 +92,9 @@ function draw() {
   let dominantFrequency = findDominantFrequency(spectrum);
 
   if (dominantFrequency >= 200 && dominantFrequency < 1000) {
-    starDiameter = dominantFrequency/100;
-    console.log("balls");
+    starDiameter = dominantFrequency / 100;
   }
+
   // Draw gradient background from the graphics buffer
   image(gradient, 0, 0);
   
@@ -161,7 +161,7 @@ function draw() {
     vertices2.push(createVector(width + 18, height));
     noiseOffset2 += noiseScale2;
 
-    // Update second mountain range
+    // Update third mountain range
     vertices3.pop();
     let y3 = map(noise(noiseOffset3), 0, 1, height * 0.7, height * 0.85); // Adjust height for shorter mountains
     vertices3.push(createVector(fX3, y3));
@@ -178,7 +178,7 @@ function draw() {
   // Filter vertices to remove those out of the visible area
   vertices1 = vertices1.filter((vertex) => vertex.x >= -10);
   vertices2 = vertices2.filter((vertex) => vertex.x >= -10);
-  vertices3 = vertices2.filter((vertex) => vertex.x >= -10);
+  vertices3 = vertices3.filter((vertex) => vertex.x >= -10);
   
   // Add new vertices at the beginning to maintain continuity
   vertices1.unshift(createVector(0, height));
